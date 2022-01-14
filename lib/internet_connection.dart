@@ -175,6 +175,31 @@ class InternetConnectionChecker {
     return result.future;
   }
 
+  Future<bool> hasConnectionWithCustomAddresses(
+      List<AddressCheckOptions> customs) async {
+    final Completer<bool> result = Completer<bool>();
+    final customList = <AddressCheckOptions>[...addresses, ...customs];
+    int length = addresses.length;
+
+    for (final AddressCheckOptions addressOptions in customList) {
+      // ignore: unawaited_futures
+      isHostReachable(addressOptions).then(
+        (AddressCheckResult request) {
+          length -= 1;
+          if (!result.isCompleted) {
+            if (request.isSuccess) {
+              result.complete(true);
+            } else if (length == 0) {
+              result.complete(false);
+            }
+          }
+        },
+      );
+    }
+
+    return result.future;
+  }
+
   /// Initiates a request to each address in [addresses].
   /// If at least one of the addresses is reachable
   /// we assume an internet connection is available and return
